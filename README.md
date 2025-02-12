@@ -8,15 +8,15 @@ Assegura't de tenir instal·lat Python (versió 3.6 o superior) i [Poetry](https
 
 1. **Clona el repositori**:
    ```bash
-git clone https://github.com/tu_usuario/IA-udg.git
-cd IA-udg/p1  # Canvia a la carpeta de la pràctica que vulguis
+   git clone https://github.com/tu_usuario/IA-udg.git
+   cd IA-udg/p1  # Canvia a la carpeta de la pràctica que vulguis
    ```
 
 2. **Instal·la les dependències**:
    Utilitza Poetry per instal·lar les dependències necessàries:
 
    ```bash
-poetry install
+   poetry install
    ```
 
    Això crearà un entorn virtual i instal·larà totes les biblioteques especificades en el fitxer `pyproject.toml`.
@@ -25,7 +25,7 @@ poetry install
    Si vols treballar dins de l'entorn virtual, pots activar-lo amb:
 
    ```bash
-poetry shell
+   poetry shell
    ```
 
    Això et permetrà executar el codi amb les dependències instal·lades.
