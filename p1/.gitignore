@@ -16,3 +16,6 @@ poetry.lock
 
 # Ignorar arxius caché
 *.cache
+
+# Ignorar csv
+*.csv
