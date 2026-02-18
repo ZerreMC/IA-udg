@@ -1,0 +1,17 @@
+# Entorno virtual
+venv/
+env/
+
+# Python (compilados y cache)
+__pycache__/
+*.pyc
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Archivos de sistema y basura de compresión
+.DS_Store
+__MACOSX/
+
+.vscode/
+.idea/
