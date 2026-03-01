@@ -18,8 +18,7 @@ class HillClimbing(AlgoritmeCercaLocal):
             if cost_actual < millor_cost_global:
                 millor_cost_global = cost_actual
                 millor_estat_global = list(estat_actual)
-
-            historia.append(millor_cost_global)
+                historia.append(int(millor_cost_global))
 
             for _ in range(self.max_iter):
                 millor_vei = None
@@ -31,14 +30,15 @@ class HillClimbing(AlgoritmeCercaLocal):
                         millor_cost_vei = c
                         millor_vei = vei
 
-                if millor_vei:
-                    estat_actual = millor_vei
-                    cost_actual = millor_cost_vei
+                if millor_vei is None:
+                    break
 
-                    if cost_actual < millor_cost_global:
-                        millor_cost_global = cost_actual
-                        millor_estat_global = list(estat_actual)
+                estat_actual = millor_vei
+                cost_actual = millor_cost_vei
 
-                    historia.append(millor_cost_global)
+                if cost_actual < millor_cost_global:
+                    millor_cost_global = cost_actual
+                    millor_estat_global = list(estat_actual)
+                    historia.append(int(cost_actual))
 
         return millor_estat_global, historia
