@@ -15,8 +15,9 @@ class ElMeuProblema(ProblemaCercaLocal):
 
     def veinat(self, estat):
         veins = []
-        for i in range(self.n):
-            for j in range(i+1, self.n):
+        n = len(estat)
+        for i in range(n - 1):
+            for j in range(i+1, n):
                 nou = estat.copy()
                 nou[i], nou[j] = nou[j], nou[i]
                 veins.append(nou)
@@ -32,8 +33,11 @@ class ElMeuProblema(ProblemaCercaLocal):
             cost_total += self.C[x][y]
 
         # Penalització per preferències
-        for tasca, pos_pref in self.preferencies.items():
-            pos_actual = estat.index(tasca)
-            cost_total += abs(pos_actual - pos_pref)
+        if self.preferencies:
+            pos = [0] * self.n
+            for idx, tasca in enumerate(estat):
+                pos[tasca] = idx
+            for tasca, pos_ideal in self.preferencies:
+                cost_total += abs(pos[tasca] - pos_ideal)
 
         return cost_total
