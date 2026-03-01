@@ -1,4 +1,4 @@
-from algoritme_cerca_local import AlgoritmeCercaLocal
+from algoritmes.algoritme_cerca_local import AlgoritmeCercaLocal
 
 class HillClimbing(AlgoritmeCercaLocal):
 
