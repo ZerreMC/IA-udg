@@ -10,59 +10,44 @@
   ;; --------------------------------------------------------------------------
   ;; 1. TIPUS
   ;; --------------------------------------------------------------------------
-  ;; Definim els tipus principals del domini:
-  ;; - robot: agents mòbils
-  ;; - paquet: objectes que es poden moure
-  ;; - lloc: qualsevol casella de la graella
-  ;; - estanteria, dispensador: llocs especials
-  ;; NOTA: estanteria i dispensador són subclasses de lloc
-  ;;       però no són accessibles pels robots (no poden entrar-hi)
-  ;; --------------------------------------------------------------------------
 
     (:types
         robot
         paquet
         lloc
-        estanteria - lloc
-        dispensador - lloc
+        estanteria - lloc      ; lloc especial no transitable
+        dispensador - lloc     ; lloc especial no transitable
     )
 
   ;; --------------------------------------------------------------------------
   ;; 2. PREDICATS
   ;; --------------------------------------------------------------------------
-  ;; - (at ?r ?l)         : robot ?r està a la casella ?l
-  ;; - (adjacent ?l1 ?l2) : les caselles són adjacents (moviment permès)
-  ;; - (top ?p ?e)        : el paquet ?p és el que està al capdamunt d'una estanteria ?e
-  ;; - (carrega-top ?r ?p): el robot ?r porta el paquet ?p al capdamunt de la seva pila
-  ;; - (empty ?e)         : l’estanteria està buida
-  ;; - (requested ?p)     : el paquet ?p ha de ser dispensat
-  ;; --------------------------------------------------------------------------
 
     (:predicates
-        ;; Posició
-        (at ?r - robot ?l - lloc)
-        (adjacent ?l1 - lloc ?l2 - lloc)
-        (free ?l - lloc)
-        (transitable ?l - lloc)
+        ;; Posició i navegació
+        (at ?r - robot ?l - lloc)          ; robot ?r està a la casella ?l
+        (adjacent ?l1 - lloc ?l2 - lloc)   ; caselles veïnes, moviment permès
+        (free ?l - lloc)                   ; la casella està lliure
+        (transitable ?l - lloc)            ; el robot pot entrar-hi
 
         ;; Piles a estanteries
-        (on-shelf ?p - paquet ?e - estanteria)
-        (on ?p1 - paquet ?p2 - paquet)
-        (clear ?p - paquet)
-        (shelf-empty ?e - estanteria)
+        (on-shelf ?p - paquet ?e - estanteria) ; paquet ?p està directament sobre l’estanteria
+        (on ?p1 - paquet ?p2 - paquet)         ; paquet ?p1 apilat sobre ?p2
+        (clear ?p - paquet)                    ; paquet sense res a sobre
+        (shelf-empty ?e - estanteria)          ; estanteria sense cap paquet
 
-        ;; Robot: només 1 paquet a la vegada
-        (holding ?r - robot ?p - paquet)
-        (handempty ?r - robot)
+        ;; Estat del robot
+        (holding ?r - robot ?p - paquet)       ; robot sosté el paquet
+        (handempty ?r - robot)                 ; robot no sosté res
 
-        ;; Objectiu
-        (requested ?p - paquet)
-        (dispensed ?p - paquet)
-            
-        ;; Ordre
-        (can-dispense ?p - paquet)
-        (next ?p1 - paquet ?p2 - paquet)
-        (last ?p - paquet)
+        ;; Objectius
+        (requested ?p - paquet)                ; paquet que cal dispensar
+        (dispensed ?p - paquet)                ; paquet ja dispensat
+
+        ;; Ordre de dispensació
+        (can-dispense ?p - paquet)             ; paquet que toca dispensar ara
+        (next ?p1 - paquet ?p2 - paquet)       ; després de ?p1 toca ?p2
+        (last ?p - paquet)                     ; últim paquet de la seqüència
     )
 
   ;; --------------------------------------------------------------------------
@@ -72,41 +57,42 @@
   ;; --------------------------------------------------------------------------
   ;; 3.1. Moure un robot
   ;; --------------------------------------------------------------------------
-  ;; El robot es pot moure entre caselles adjacents lliures.
-  ;; No controlem energia ni càrrega.
-  ;; --------------------------------------------------------------------------
 
     (:action move
         :parameters (?r - robot ?from - lloc ?to - lloc)
         :precondition (and
-            (at ?r ?from)
-            (adjacent ?from ?to)
-            (transitable ?to)
-            (free ?to)
+            (at ?r ?from)        ; el robot és al punt d’origen
+            (adjacent ?from ?to) ; els llocs són adjacents
+            (transitable ?to)    ; el robot pot entrar a ?to
+            (free ?to)           ; la casella destí està lliure
         )
         :effect (and
-            (not (at ?r ?from))
-            (at ?r ?to)
-            (free ?from)
-            (not (free ?to))
+            (not (at ?r ?from))  ; deixa el lloc d’origen
+            (at ?r ?to)          ; passa al lloc destí
+            (free ?from)         ; el lloc d’origen queda lliure
+            (not (free ?to))     ; el lloc destí queda ocupat
         )
     )
+
+  ;; --------------------------------------------------------------------------
+  ;; 3.2. Agafar paquets
+  ;; --------------------------------------------------------------------------
 
     (:action pick-from-shelf
         :parameters (?r - robot ?p - paquet ?e - estanteria ?l - lloc)
         :precondition (and
-            (at ?r ?l)
+            (at ?r ?l)           ; robot a la casella adjacent
             (adjacent ?l ?e)
-            (on-shelf ?p ?e)
-            (clear ?p)
-            (handempty ?r)
-            (not (dispensed ?p))
+            (on-shelf ?p ?e)     ; paquet sobre l’estanteria
+            (clear ?p)           ; paquet sense res a sobre
+            (handempty ?r)       ; robot amb mà buida
+            (not (dispensed ?p)) ; no dispensat encara
         )
         :effect (and
-            (holding ?r ?p)
+            (holding ?r ?p)      ; robot sosté el paquet
             (not (handempty ?r))
-            (not (on-shelf ?p ?e))
-            (shelf-empty ?e)
+            (not (on-shelf ?p ?e)) ; ja no és a l’estanteria
+            (shelf-empty ?e)       ; l’estanteria queda buida
         )
     )
 
@@ -115,24 +101,21 @@
         :precondition (and
             (at ?r ?l)
             (adjacent ?l ?e)
-            (on ?p ?q)
-            (clear ?p)
+            (on ?p ?q)           ; ?p està sobre ?q
+            (clear ?p)           ; ?p és el paquet superior
             (handempty ?r)
             (not (dispensed ?p))
         )
         :effect (and
-            (holding ?r ?p)
+            (holding ?r ?p)      ; robot sosté ?p
             (not (handempty ?r))
-            (not (on ?p ?q))
-            (clear ?q)
+            (not (on ?p ?q))     ; es desfà la relació d’apilat
+            (clear ?q)           ; ?q queda lliure a sobre
         )
     )
 
-
   ;; --------------------------------------------------------------------------
-  ;; 3.3. Deixar un paquet a una estanteria
-  ;; --------------------------------------------------------------------------
-  ;; El robot deixa el paquet que porta al capdamunt.
+  ;; 3.3. Deixar paquets
   ;; --------------------------------------------------------------------------
 
     (:action drop-on-empty-shelf
@@ -140,13 +123,13 @@
         :precondition (and
             (at ?r ?l)
             (adjacent ?l ?e)
-            (holding ?r ?p)
-            (shelf-empty ?e)
+            (holding ?r ?p)      ; robot sosté el paquet
+            (shelf-empty ?e)     ; estanteria buida
             (not (dispensed ?p))
         )
         :effect (and
-            (on-shelf ?p ?e)
-            (clear ?p)
+            (on-shelf ?p ?e)     ; paquet col·locat a l’estanteria
+            (clear ?p)           ; queda com a paquet superior
             (not (shelf-empty ?e))
             (handempty ?r)
             (not (holding ?r ?p))
@@ -159,17 +142,21 @@
             (at ?r ?l)
             (adjacent ?l ?e)
             (holding ?r ?p)
-            (clear ?q)
+            (clear ?q)           ; paquet base lliure
             (not (dispensed ?p))
         )
         :effect (and
-            (on ?p ?q)
-            (clear ?p)
-            (not (clear ?q))
+            (on ?p ?q)           ; ?p queda sobre ?q
+            (clear ?p)           ; ?p és el nou paquet superior
+            (not (clear ?q))     ; ?q deixa d’estar lliure
             (handempty ?r)
             (not (holding ?r ?p))
         )
     )
+
+  ;; --------------------------------------------------------------------------
+  ;; 3.4. Dispensar paquets
+  ;; --------------------------------------------------------------------------
 
     (:action dispense-free
         :parameters (?r - robot ?p - paquet ?d - dispensador ?l - lloc)
@@ -177,11 +164,11 @@
             (at ?r ?l)
             (adjacent ?l ?d)
             (holding ?r ?p)
-            (requested ?p)
+            (requested ?p)       ; paquet sol·licitat
             (not (dispensed ?p))
         )
         :effect (and
-            (dispensed ?p)
+            (dispensed ?p)       ; marcat com a dispensat
             (handempty ?r)
             (not (holding ?r ?p))
         )
@@ -194,14 +181,14 @@
             (adjacent ?l ?d)
             (holding ?r ?p)
             (requested ?p)
-            (can-dispense ?p)
-            (next ?p ?pnext)
+            (can-dispense ?p)    ; és el paquet que toca
+            (next ?p ?pnext)     ; el següent serà ?pnext
             (not (dispensed ?p))
         )
         :effect (and
             (dispensed ?p)
             (not (can-dispense ?p))
-            (can-dispense ?pnext)
+            (can-dispense ?pnext) ; activem el següent
             (handempty ?r)
             (not (holding ?r ?p))
         )
@@ -215,12 +202,12 @@
             (holding ?r ?p)
             (requested ?p)
             (can-dispense ?p)
-            (last ?p)
+            (last ?p)            ; és l’últim de la seqüència
             (not (dispensed ?p))
         )
         :effect (and
             (dispensed ?p)
-            (not (can-dispense ?p))
+            (not (can-dispense ?p)) ; ja no queda res més per dispensar
             (handempty ?r)
             (not (holding ?r ?p))
         )
