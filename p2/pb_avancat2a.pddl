@@ -1,12 +1,11 @@
-(define (problem pb_avancat2b)
-    (:domain magabot_avancat)
+(define (problem pb_avancat2a)
+    (:domain magabot_simple)
     (:objects
         r1 r2 - robot
         pkg1 pkg2 pkg3 pkg4 pkg5 pkg6 p_end - package
         l11 l12 l13 l14 l15 l16 l21 l25 l26 l31 l32 l36 l42 l44 l45 l46 l52 l53 l54 - location
         e1 e2 - shelf
         d - dispenser
-        c - charger
     )
     (:init
         (at r1 l13)
@@ -16,29 +15,12 @@
         (occupied l13)
         (occupied l44)
 
-        (= (battery r1) 30)
-        (= (battery r2) 30)
-        (= (max-battery r1) 50)
-        (= (max-battery r2) 50)
-        (= (load r1) 0)
-        (= (load r2) 0)
-        (= (max-load r1) 12)
-        (= (max-load r2) 12)
-        (= (total-energy-used) 0)
-
-        (= (weight pkg1) 4)
-        (= (weight pkg2) 3)
-        (= (weight pkg3) 2)
-        (= (weight pkg4) 1)
-        (= (weight pkg5) 3)
-        (= (weight pkg6) 2)
-        (= (weight p_end) 0)
-
         (on pkg4 pkg3)
         (on pkg3 pkg2)
         (on pkg2 pkg1)
         (on pkg1 e1)
         (clear pkg4)
+
         (on pkg6 pkg5)
         (on pkg5 e2)
         (clear pkg6)
@@ -56,11 +38,11 @@
 
         (next-to-dispense pkg1)
         (order-seq pkg1 pkg2)
-        (order-seq pkg2 pkg5)
-        (order-seq pkg5 pkg3)
-        (order-seq pkg3 pkg6)
-        (order-seq pkg6 pkg4)
-        (order-seq pkg4 p_end)
+        (order-seq pkg2 pkg3)
+        (order-seq pkg3 pkg4)
+        (order-seq pkg4 pkg5)
+        (order-seq pkg5 pkg6)
+        (order-seq pkg6 p_end)
 
         (connected l11 l12)
         (connected l12 l11)
@@ -84,6 +66,7 @@
         (connected l53 l52)
         (connected l53 l54)
         (connected l54 l53)
+
         (connected l11 l21)
         (connected l21 l11)
         (connected l21 l31)
@@ -107,18 +90,15 @@
         (adjacent-shelf l25 e1)
         (adjacent-shelf l46 e2)
         (adjacent-dispenser l52 d)
-
-        ;; El carregador està a C(5,5), accessible des de l45 i l54
-        (adjacent-charger l45 c)
-        (adjacent-charger l54 c)
     )
     (:goal
         (and
-            (dispensed pkg1) (dispensed pkg2) (dispensed pkg3)
-            (dispensed pkg4) (dispensed pkg5) (dispensed pkg6)
+            (dispensed pkg1)
+            (dispensed pkg2)
+            (dispensed pkg3)
+            (dispensed pkg4)
+            (dispensed pkg5)
+            (dispensed pkg6)
         )
-    )
-    (:metric minimize
-        (total-energy-used)
     )
 )
