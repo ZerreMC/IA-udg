@@ -1,15 +1,14 @@
-(define (problem pb_avancat2a)
-    (:domain magabot_simple)
+(define (problem pb_avancat2b)
+    (:domain magabot_avancat)
     (:objects
         r1 r2 - robot
         pkg1 pkg2 pkg3 pkg4 pkg5 pkg6 p_end - package
-        ;; Casillas libres deducidas del mapa 5x6
         l11 l12 l13 l14 l15 l16 l21 l25 l26 l31 l32 l36 l42 l44 l45 l46 l52 l53 l54 - location
         e1 e2 - shelf
         d - dispenser
+        c - charger
     )
     (:init
-        ;; Posiciones iniciales de los robots [cite: 167]
         (at r1 l13)
         (at r2 l44)
         (clear r1)
@@ -17,19 +16,33 @@
         (occupied l13)
         (occupied l44)
 
-        ;; Estado inicial de E1 (pkg4 encima de pkg3...) [cite: 157]
+        (= (battery r1) 30)
+        (= (battery r2) 30)
+        (= (max-battery r1) 50)
+        (= (max-battery r2) 50)
+        (= (load r1) 0)
+        (= (load r2) 0)
+        (= (max-load r1) 12)
+        (= (max-load r2) 12)
+        (= (total-energy-used) 0)
+
+        (= (weight pkg1) 4)
+        (= (weight pkg2) 3)
+        (= (weight pkg3) 2)
+        (= (weight pkg4) 1)
+        (= (weight pkg5) 3)
+        (= (weight pkg6) 2)
+        (= (weight p_end) 0)
+
         (on pkg4 pkg3)
         (on pkg3 pkg2)
         (on pkg2 pkg1)
         (on pkg1 e1)
         (clear pkg4)
-
-        ;; Estado inicial de E2 (pkg6 encima de pkg5) [cite: 159]
         (on pkg6 pkg5)
         (on pkg5 e2)
         (clear pkg6)
 
-        ;; Pilas lógicas
         (in-stack e1 e1)
         (in-stack e2 e2)
         (in-stack r1 r1)
@@ -41,16 +54,14 @@
         (in-stack pkg5 e2)
         (in-stack pkg6 e2)
 
-        ;; Secuencia (el problema no lo exige[cite: 169], pero el dominio lo necesita)
         (next-to-dispense pkg1)
         (order-seq pkg1 pkg2)
-        (order-seq pkg2 pkg3)
-        (order-seq pkg3 pkg4)
-        (order-seq pkg4 pkg5)
-        (order-seq pkg5 pkg6)
-        (order-seq pkg6 p_end)
+        (order-seq pkg2 pkg5)
+        (order-seq pkg5 pkg3)
+        (order-seq pkg3 pkg6)
+        (order-seq pkg6 pkg4)
+        (order-seq pkg4 p_end)
 
-        ;; Conexiones horizontales
         (connected l11 l12)
         (connected l12 l11)
         (connected l12 l13)
@@ -73,8 +84,6 @@
         (connected l53 l52)
         (connected l53 l54)
         (connected l54 l53)
-
-        ;; Conexiones verticales
         (connected l11 l21)
         (connected l21 l11)
         (connected l21 l31)
@@ -94,25 +103,22 @@
         (connected l44 l54)
         (connected l54 l44)
 
-        ;; Adyacencias a estanterías y dispensador
-        ;; E1 está en (2,4)[cite: 155]. Accesible desde L14 y L25.
         (adjacent-shelf l14 e1)
         (adjacent-shelf l25 e1)
-
-        ;; E2 está en (5,6)[cite: 159]. Accesible desde L46.
         (adjacent-shelf l46 e2)
-
-        ;; D está en (5,1)[cite: 161]. Accesible desde L52.
         (adjacent-dispenser l52 d)
+
+        ;; El carregador està a C(5,5), accessible des de l45 i l54
+        (adjacent-charger l45 c)
+        (adjacent-charger l54 c)
     )
     (:goal
         (and
-            (dispensed pkg1)
-            (dispensed pkg2)
-            (dispensed pkg3)
-            (dispensed pkg4)
-            (dispensed pkg5)
-            (dispensed pkg6)
+            (dispensed pkg1) (dispensed pkg2) (dispensed pkg3)
+            (dispensed pkg4) (dispensed pkg5) (dispensed pkg6)
         )
+    )
+    (:metric minimize
+        (total-energy-used)
     )
 )
