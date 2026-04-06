@@ -27,7 +27,7 @@
         ;; Posició i navegació
         (at ?r - robot ?l - lloc)          ; robot ?r està a la casella ?l
         (adjacent ?l1 - lloc ?l2 - lloc)   ; caselles veïnes, moviment permès
-        (free ?l - lloc)                   ; la casella està lliure
+        (occupied ?l - lloc)               ; la casella està ocupada
         (transitable ?l - lloc)            ; el robot pot entrar-hi
 
         ;; Piles a estanteries
@@ -64,13 +64,13 @@
             (at ?r ?from)        ; el robot és al punt d’origen
             (adjacent ?from ?to) ; els llocs són adjacents
             (transitable ?to)    ; el robot pot entrar a ?to
-            (free ?to)           ; la casella destí està lliure
+            (not (occupied ?to)) ; la casella destí està lliure
         )
         :effect (and
-            (not (at ?r ?from))  ; deixa el lloc d’origen
-            (at ?r ?to)          ; passa al lloc destí
-            (free ?from)         ; el lloc d’origen queda lliure
-            (not (free ?to))     ; el lloc destí queda ocupat
+            (not (at ?r ?from))     ; deixa el lloc d’origen
+            (at ?r ?to)             ; passa al lloc destí
+            (occupied ?to)          ; el lloc destí queda ocupat
+            (not (occupied ?from))  ;
         )
     )
 
