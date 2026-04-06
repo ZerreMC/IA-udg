@@ -20,17 +20,6 @@
 
         (dispensed ?p - package)
 
-        ;; Control de permisos
-        (allowed-to-dispense ?p - package)
-
-        ;; Control d’ordre
-        (phase2)
-        (phase3)
-
-        ;; Identificadors de paquets
-        (is-pkg2 ?p - package)
-        (is-pkg3 ?p - package)
-
         (next-to-dispense ?p - package)
         (order-seq ?curr - package ?next - package)
     )
@@ -55,11 +44,9 @@
         :precondition (and
             (at ?r ?loc)
             (adjacent-shelf ?loc ?s)
-
             (clear ?p)
             (on ?p ?p_under)
             (in-stack ?p ?s)
-
             (clear ?r_top)
             (in-stack ?r_top ?r)
         )
@@ -67,7 +54,6 @@
             (not (on ?p ?p_under))
             (not (in-stack ?p ?s))
             (clear ?p_under)
-
             (not (clear ?r_top))
             (on ?p ?r_top)
             (in-stack ?p ?r)
@@ -79,11 +65,9 @@
         :precondition (and
             (at ?r ?loc)
             (adjacent-shelf ?loc ?s)
-
             (clear ?p)
             (on ?p ?p_under)
             (in-stack ?p ?r)
-
             (clear ?s_top)
             (in-stack ?s_top ?s)
         )
@@ -91,7 +75,6 @@
             (not (on ?p ?p_under))
             (not (in-stack ?p ?r))
             (clear ?p_under)
-
             (not (clear ?s_top))
             (on ?p ?s_top)
             (in-stack ?p ?s)
@@ -103,13 +86,9 @@
         :precondition (and
             (at ?r ?loc)
             (adjacent-dispenser ?loc ?d)
-
             (clear ?p)
             (on ?p ?p_under)
             (in-stack ?p ?r)
-
-            (allowed-to-dispense ?p)
-
             (next-to-dispense ?p)
             (order-seq ?p ?p_next)
         )
@@ -119,31 +98,8 @@
             (not (in-stack ?p ?r))
             (not (clear ?p))
             (dispensed ?p)
-
             (not (next-to-dispense ?p))
             (next-to-dispense ?p_next)
         )
-    )
-
-    ;; Accions de control d’ordre
-    (:action mark-phase2
-        :parameters (?p - package)
-        :precondition (and
-            (is-pkg2 ?p)
-            (dispensed ?p)
-            (not (phase2))
-        )
-        :effect (phase2)
-    )
-
-    (:action mark-phase3
-        :parameters (?p - package)
-        :precondition (and
-            (is-pkg3 ?p)
-            (phase2)
-            (dispensed ?p)
-            (not (phase3))
-        )
-        :effect (phase3)
     )
 )

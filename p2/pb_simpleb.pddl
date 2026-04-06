@@ -8,6 +8,11 @@
         d - dispenser
     )
     (:init
+        (next-to-dispense pkg2)
+        (order-seq pkg2 pkg1)
+        (order-seq pkg1 pkg3)
+        (order-seq pkg3 p_end)
+
         (at r1 l61)
         (at r2 l55)
         (clear r1)
@@ -28,11 +33,6 @@
         (in-stack pkg1 e1)
         (in-stack pkg2 e1)
         (in-stack pkg3 e2)
-
-        (next-to-dispense pkg2)
-        (order-seq pkg2 pkg1)
-        (order-seq pkg1 pkg3)
-        (order-seq pkg3 p_end)
 
         (connected l11 l12)
         (connected l12 l11)
