@@ -1,0 +1,118 @@
+(define (problem pb_avancat2a)
+    (:domain magabot_simple)
+    (:objects
+        r1 r2 - robot
+        pkg1 pkg2 pkg3 pkg4 pkg5 pkg6 p_end - package
+        ;; Casillas libres deducidas del mapa 5x6
+        l11 l12 l13 l14 l15 l16 l21 l25 l26 l31 l32 l36 l42 l44 l45 l46 l52 l53 l54 - location
+        e1 e2 - shelf
+        d - dispenser
+    )
+    (:init
+        ;; Posiciones iniciales de los robots [cite: 167]
+        (at r1 l13)
+        (at r2 l44)
+        (clear r1)
+        (clear r2)
+        (occupied l13)
+        (occupied l44)
+
+        ;; Estado inicial de E1 (pkg4 encima de pkg3...) [cite: 157]
+        (on pkg4 pkg3)
+        (on pkg3 pkg2)
+        (on pkg2 pkg1)
+        (on pkg1 e1)
+        (clear pkg4)
+
+        ;; Estado inicial de E2 (pkg6 encima de pkg5) [cite: 159]
+        (on pkg6 pkg5)
+        (on pkg5 e2)
+        (clear pkg6)
+
+        ;; Pilas lógicas
+        (in-stack e1 e1)
+        (in-stack e2 e2)
+        (in-stack r1 r1)
+        (in-stack r2 r2)
+        (in-stack pkg1 e1)
+        (in-stack pkg2 e1)
+        (in-stack pkg3 e1)
+        (in-stack pkg4 e1)
+        (in-stack pkg5 e2)
+        (in-stack pkg6 e2)
+
+        ;; Secuencia (el problema no lo exige[cite: 169], pero el dominio lo necesita)
+        (next-to-dispense pkg1)
+        (order-seq pkg1 pkg2)
+        (order-seq pkg2 pkg3)
+        (order-seq pkg3 pkg4)
+        (order-seq pkg4 pkg5)
+        (order-seq pkg5 pkg6)
+        (order-seq pkg6 p_end)
+
+        ;; Conexiones horizontales
+        (connected l11 l12)
+        (connected l12 l11)
+        (connected l12 l13)
+        (connected l13 l12)
+        (connected l13 l14)
+        (connected l14 l13)
+        (connected l14 l15)
+        (connected l15 l14)
+        (connected l15 l16)
+        (connected l16 l15)
+        (connected l25 l26)
+        (connected l26 l25)
+        (connected l31 l32)
+        (connected l32 l31)
+        (connected l44 l45)
+        (connected l45 l44)
+        (connected l45 l46)
+        (connected l46 l45)
+        (connected l52 l53)
+        (connected l53 l52)
+        (connected l53 l54)
+        (connected l54 l53)
+
+        ;; Conexiones verticales
+        (connected l11 l21)
+        (connected l21 l11)
+        (connected l21 l31)
+        (connected l31 l21)
+        (connected l32 l42)
+        (connected l42 l32)
+        (connected l42 l52)
+        (connected l52 l42)
+        (connected l15 l25)
+        (connected l25 l15)
+        (connected l16 l26)
+        (connected l26 l16)
+        (connected l26 l36)
+        (connected l36 l26)
+        (connected l36 l46)
+        (connected l46 l36)
+        (connected l44 l54)
+        (connected l54 l44)
+
+        ;; Adyacencias a estanterías y dispensador
+        ;; E1 está en (2,4)[cite: 155]. Accesible desde L14 y L25.
+        (adjacent-shelf l14 e1)
+        (adjacent-shelf l25 e1)
+
+        ;; E2 está en (5,6)[cite: 159]. Accesible desde L46.
+        (adjacent-shelf l46 e2)
+
+        ;; D está en (5,1)[cite: 161]. Accesible desde L52.
+        (adjacent-dispenser l52 d)
+    )
+    (:goal
+        (and
+            (dispensed pkg1)
+            (dispensed pkg2)
+            (dispensed pkg3)
+            (dispensed pkg4)
+            (dispensed pkg5)
+            (dispensed pkg6)
+        )
+    )
+)
