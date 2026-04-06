@@ -143,6 +143,7 @@
         :precondition (and
             (at ?r ?loc)
             (adjacent-charger ?loc ?c)
+            (< (battery ?r) (max-battery ?r))
         )
         :effect (and
             (when
