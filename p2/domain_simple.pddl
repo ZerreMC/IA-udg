@@ -6,10 +6,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (domain magabot-simple)
-
-  ;; --------------------------------------------------------------------------
-  ;; 1. TIPUS
-  ;; --------------------------------------------------------------------------
+    (:requirements :strips :typing :negative-preconditions)
+    ;; --------------------------------------------------------------------------
+    ;; 1. TIPUS
+    ;; --------------------------------------------------------------------------
 
     (:types
         robot
@@ -33,6 +33,7 @@
         ;; Piles a estanteries
         (on-shelf ?p - paquet ?e - estanteria) ; paquet ?p està directament sobre l’estanteria
         (on ?p1 - paquet ?p2 - paquet)         ; paquet ?p1 apilat sobre ?p2
+        (in-shelf ?p - paquet ?e - estanteria)
         (clear ?p - paquet)                    ; paquet sense res a sobre
         (shelf-empty ?e - estanteria)          ; estanteria sense cap paquet
 
@@ -84,15 +85,17 @@
             (at ?r ?l)           ; robot a la casella adjacent
             (adjacent ?l ?e)
             (on-shelf ?p ?e)     ; paquet sobre l’estanteria
+            (in-shelf ?p ?e)
             (clear ?p)           ; paquet sense res a sobre
             (handempty ?r)       ; robot amb mà buida
             (not (dispensed ?p)) ; no dispensat encara
         )
         :effect (and
-            (holding ?r ?p)      ; robot sosté el paquet
+            (holding ?r ?p)      ; ARA EL ROBOT SOSTÉ EL PAQUET
             (not (handempty ?r))
             (not (on-shelf ?p ?e)) ; ja no és a l’estanteria
             (shelf-empty ?e)       ; l’estanteria queda buida
+            (not (in-shelf ?p ?e))
         )
     )
 
@@ -102,14 +105,17 @@
             (at ?r ?l)
             (adjacent ?l ?e)
             (on ?p ?q)           ; ?p està sobre ?q
+            (in-shelf ?p ?e)
+            (in-shelf ?q ?e)
             (clear ?p)           ; ?p és el paquet superior
             (handempty ?r)
             (not (dispensed ?p))
         )
         :effect (and
-            (holding ?r ?p)      ; robot sosté ?p
+            (holding ?r ?p) 
             (not (handempty ?r))
             (not (on ?p ?q))     ; es desfà la relació d’apilat
+            (not (in-shelf ?p ?e))
             (clear ?q)           ; ?q queda lliure a sobre
         )
     )
@@ -129,6 +135,7 @@
         )
         :effect (and
             (on-shelf ?p ?e)     ; paquet col·locat a l’estanteria
+            (in-shelf ?p ?e)
             (clear ?p)           ; queda com a paquet superior
             (not (shelf-empty ?e))
             (handempty ?r)
@@ -143,10 +150,12 @@
             (adjacent ?l ?e)
             (holding ?r ?p)
             (clear ?q)           ; paquet base lliure
+            (in-shelf ?q ?e)
             (not (dispensed ?p))
         )
         :effect (and
             (on ?p ?q)           ; ?p queda sobre ?q
+            (in-shelf ?p ?e)     ; ASSIGNACIÓ CORREGIDA (?p en comptes de ?q)
             (clear ?p)           ; ?p és el nou paquet superior
             (not (clear ?q))     ; ?q deixa d’estar lliure
             (handempty ?r)
@@ -169,45 +178,6 @@
         )
         :effect (and
             (dispensed ?p)       ; marcat com a dispensat
-            (handempty ?r)
-            (not (holding ?r ?p))
-        )
-    )
-
-    (:action dispense-ordered-next
-        :parameters (?r - robot ?p - paquet ?pnext - paquet ?d - dispensador ?l - lloc)
-        :precondition (and
-            (at ?r ?l)
-            (adjacent ?l ?d)
-            (holding ?r ?p)
-            (requested ?p)
-            (can-dispense ?p)    ; és el paquet que toca
-            (next ?p ?pnext)     ; el següent serà ?pnext
-            (not (dispensed ?p))
-        )
-        :effect (and
-            (dispensed ?p)
-            (not (can-dispense ?p))
-            (can-dispense ?pnext) ; activem el següent
-            (handempty ?r)
-            (not (holding ?r ?p))
-        )
-    )
-
-    (:action dispense-ordered-last
-        :parameters (?r - robot ?p - paquet ?d - dispensador ?l - lloc)
-        :precondition (and
-            (at ?r ?l)
-            (adjacent ?l ?d)
-            (holding ?r ?p)
-            (requested ?p)
-            (can-dispense ?p)
-            (last ?p)            ; és l’últim de la seqüència
-            (not (dispensed ?p))
-        )
-        :effect (and
-            (dispensed ?p)
-            (not (can-dispense ?p)) ; ja no queda res més per dispensar
             (handempty ?r)
             (not (holding ?r ?p))
         )

@@ -68,10 +68,13 @@
         ;; E2: pkg3
         ;; -----------------------------------------------------------
         (on-shelf pkg2 E1)
+        (in-shelf pkg2 E1)
         (on pkg1 pkg2)
+        (in-shelf pkg1 E1)
         (clear pkg1)
 
         (on-shelf pkg3 E2)
+        (in-shelf pkg3 E2)
         (clear pkg3)
 
         ;; E1 i E2 no són buides
@@ -164,23 +167,16 @@
 
         ;; E1
         (adjacent L12 E1)
-        (adjacent E1 L12)
         (adjacent L21 E1)
-        (adjacent E1 L21)
 
         ;; E2
         (adjacent L15 E2)
-        (adjacent E2 L15)
         (adjacent L35 E2)
-        (adjacent E2 L35)
 
         ;; D
         (adjacent L43 D)
-        (adjacent D L43)
         (adjacent L45 D)
-        (adjacent D L45)
         (adjacent L54 D)
-        (adjacent D L54)
     )
 
     (:goal
