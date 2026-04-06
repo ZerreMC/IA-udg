@@ -1,200 +1,105 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; DOMAIN SIMPLE MAGABOT
-;; Model bàsic sense energia ni pesos
-;; Corregit per reduir grounding: les accions de moviment i operació
-;; treballen només amb caselles transitables (cella)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (domain magabot-simple)
+(define (domain magabot_simple)
     (:requirements :strips :typing :negative-preconditions)
 
     (:types
-        robot
-        paquet
-        lloc
-        cella - lloc
-        estanteria - lloc
-        dispensador - lloc
+        location dispenser package robot shelf - stack_element
     )
 
     (:predicates
-        ;; Posició i navegació
-        (at ?r - robot ?l - cella)
-        (adjacent ?l1 - lloc ?l2 - lloc)
-        (occupied ?l - cella)
+        (at ?r - robot ?l - location)
+        (occupied ?l - location)
+        (connected ?l1 - location ?l2 - location)
 
-        ;; Piles a estanteries
-        (on-shelf ?p - paquet ?e - estanteria)
-        (on ?p1 - paquet ?p2 - paquet)
-        (in-shelf ?p - paquet ?e - estanteria)
-        (clear ?p - paquet)
-        (shelf-empty ?e - estanteria)
+        (adjacent-shelf ?l - location ?s - shelf)
+        (adjacent-dispenser ?l - location ?d - dispenser)
 
-        ;; Estat del robot
-        (holding ?r - robot ?p - paquet)
-        (handempty ?r - robot)
+        (on ?top - package ?bottom - stack_element)
+        (clear ?x - stack_element)
 
-        ;; Objectius
-        (requested ?p - paquet)
-        (dispensed ?p - paquet)
+        (in-stack ?x - stack_element ?base - stack_element)
 
-        ;; Variants ordenades
-        (ordered-mission)
-        (can-dispense ?p - paquet)
-        (next ?p1 - paquet ?p2 - paquet)
-        (last ?p - paquet)
+        (dispensed ?p - package)
     )
 
-    (:action move
-        :parameters (?r - robot ?from - cella ?to - cella)
+    (:action moure
+        :parameters (?r - robot ?from - location ?to - location)
         :precondition (and
             (at ?r ?from)
-            (adjacent ?from ?to)
+            (connected ?from ?to)
             (not (occupied ?to))
         )
         :effect (and
             (not (at ?r ?from))
+            (not (occupied ?from))
             (at ?r ?to)
             (occupied ?to)
-            (not (occupied ?from))
         )
     )
 
-    (:action pick-from-shelf
-        :parameters (?r - robot ?p - paquet ?e - estanteria ?l - cella)
+    (:action agafar
+        :parameters (?r - robot ?loc - location ?s - shelf ?p - package ?p_under - stack_element ?r_top - stack_element)
         :precondition (and
-            (at ?r ?l)
-            (adjacent ?l ?e)
-            (on-shelf ?p ?e)
-            (in-shelf ?p ?e)
+            (at ?r ?loc)
+            (adjacent-shelf ?loc ?s)
+
             (clear ?p)
-            (handempty ?r)
-            (not (dispensed ?p))
+            (on ?p ?p_under)
+            (in-stack ?p ?s)
+
+            (clear ?r_top)
+            (in-stack ?r_top ?r)
         )
         :effect (and
-            (holding ?r ?p)
-            (not (handempty ?r))
-            (not (on-shelf ?p ?e))
-            (not (in-shelf ?p ?e))
-            (shelf-empty ?e)
+            (not (on ?p ?p_under))
+            (not (in-stack ?p ?s))
+            (clear ?p_under)
+
+            (not (clear ?r_top))
+            (on ?p ?r_top)
+            (in-stack ?p ?r)
         )
     )
 
-    (:action pick-from-package
-        :parameters (?r - robot ?p - paquet ?q - paquet ?e - estanteria ?l - cella)
+    (:action descarregar
+        :parameters (?r - robot ?loc - location ?s - shelf ?p - package ?p_under - stack_element ?s_top - stack_element)
         :precondition (and
-            (at ?r ?l)
-            (adjacent ?l ?e)
-            (on ?p ?q)
-            (in-shelf ?p ?e)
-            (in-shelf ?q ?e)
+            (at ?r ?loc)
+            (adjacent-shelf ?loc ?s)
+
             (clear ?p)
-            (handempty ?r)
-            (not (dispensed ?p))
+            (on ?p ?p_under)
+            (in-stack ?p ?r)
+
+            (clear ?s_top)
+            (in-stack ?s_top ?s)
         )
         :effect (and
-            (holding ?r ?p)
-            (not (handempty ?r))
-            (not (on ?p ?q))
-            (not (in-shelf ?p ?e))
-            (clear ?q)
+            (not (on ?p ?p_under))
+            (not (in-stack ?p ?r))
+            (clear ?p_under)
+
+            (not (clear ?s_top))
+            (on ?p ?s_top)
+            (in-stack ?p ?s)
         )
     )
 
-    (:action drop-on-empty-shelf
-        :parameters (?r - robot ?p - paquet ?e - estanteria ?l - cella)
+    (:action dispensar
+        :parameters (?r - robot ?loc - location ?d - dispenser ?p - package ?p_under - stack_element)
         :precondition (and
-            (at ?r ?l)
-            (adjacent ?l ?e)
-            (holding ?r ?p)
-            (shelf-empty ?e)
-            (not (dispensed ?p))
-        )
-        :effect (and
-            (on-shelf ?p ?e)
-            (in-shelf ?p ?e)
+            (at ?r ?loc)
+            (adjacent-dispenser ?loc ?d)
+
             (clear ?p)
-            (not (shelf-empty ?e))
-            (handempty ?r)
-            (not (holding ?r ?p))
-        )
-    )
-
-    (:action drop-on-package
-        :parameters (?r - robot ?p - paquet ?q - paquet ?e - estanteria ?l - cella)
-        :precondition (and
-            (at ?r ?l)
-            (adjacent ?l ?e)
-            (holding ?r ?p)
-            (clear ?q)
-            (in-shelf ?q ?e)
-            (not (dispensed ?p))
+            (on ?p ?p_under)
+            (in-stack ?p ?r)
         )
         :effect (and
-            (on ?p ?q)
-            (in-shelf ?p ?e)
-            (clear ?p)
-            (not (clear ?q))
-            (handempty ?r)
-            (not (holding ?r ?p))
-        )
-    )
-
-    (:action dispense-free
-        :parameters (?r - robot ?p - paquet ?d - dispensador ?l - cella)
-        :precondition (and
-            (not (ordered-mission))
-            (at ?r ?l)
-            (adjacent ?l ?d)
-            (holding ?r ?p)
-            (requested ?p)
-            (not (dispensed ?p))
-        )
-        :effect (and
+            (not (on ?p ?p_under))
+            (clear ?p_under)
+            (not (in-stack ?p ?r))
+            (not (clear ?p))
             (dispensed ?p)
-            (handempty ?r)
-            (not (holding ?r ?p))
-        )
-    )
-
-    (:action dispense-ordered-next
-        :parameters (?r - robot ?p - paquet ?p2 - paquet ?d - dispensador ?l - cella)
-        :precondition (and
-            (ordered-mission)
-            (at ?r ?l)
-            (adjacent ?l ?d)
-            (holding ?r ?p)
-            (requested ?p)
-            (can-dispense ?p)
-            (next ?p ?p2)
-            (not (dispensed ?p))
-        )
-        :effect (and
-            (dispensed ?p)
-            (not (can-dispense ?p))
-            (can-dispense ?p2)
-            (handempty ?r)
-            (not (holding ?r ?p))
-        )
-    )
-
-    (:action dispense-ordered-last
-        :parameters (?r - robot ?p - paquet ?d - dispensador ?l - cella)
-        :precondition (and
-            (ordered-mission)
-            (at ?r ?l)
-            (adjacent ?l ?d)
-            (holding ?r ?p)
-            (requested ?p)
-            (can-dispense ?p)
-            (last ?p)
-            (not (dispensed ?p))
-        )
-        :effect (and
-            (dispensed ?p)
-            (not (can-dispense ?p))
-            (handempty ?r)
-            (not (holding ?r ?p))
         )
     )
 )
