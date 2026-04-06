@@ -30,6 +30,9 @@
         ;; Identificadors de paquets
         (is-pkg2 ?p - package)
         (is-pkg3 ?p - package)
+
+        (next-to-dispense ?p - package)
+        (order-seq ?curr - package ?next - package)
     )
 
     (:action moure
@@ -96,7 +99,7 @@
     )
 
     (:action dispensar
-        :parameters (?r - robot ?loc - location ?d - dispenser ?p - package ?p_under - stack_element)
+        :parameters (?r - robot ?loc - location ?d - dispenser ?p - package ?p_under - stack_element ?p_next - package)
         :precondition (and
             (at ?r ?loc)
             (adjacent-dispenser ?loc ?d)
@@ -106,6 +109,9 @@
             (in-stack ?p ?r)
 
             (allowed-to-dispense ?p)
+
+            (next-to-dispense ?p)
+            (order-seq ?p ?p_next)
         )
         :effect (and
             (not (on ?p ?p_under))
@@ -113,6 +119,9 @@
             (not (in-stack ?p ?r))
             (not (clear ?p))
             (dispensed ?p)
+
+            (not (next-to-dispense ?p))
+            (next-to-dispense ?p_next)
         )
     )
 
