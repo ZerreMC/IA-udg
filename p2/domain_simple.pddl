@@ -19,13 +19,13 @@
   ;;       però no són accessibles pels robots (no poden entrar-hi)
   ;; --------------------------------------------------------------------------
 
-  (:types
-      robot
-      paquet
-      lloc
-      estanteria - lloc
-      dispensador - lloc
-  )
+    (:types
+        robot
+        paquet
+        lloc
+        estanteria - lloc
+        dispensador - lloc
+    )
 
   ;; --------------------------------------------------------------------------
   ;; 2. PREDICATS
@@ -38,23 +38,32 @@
   ;; - (requested ?p)     : el paquet ?p ha de ser dispensat
   ;; --------------------------------------------------------------------------
 
-  (:predicates
-      (at ?r - robot ?l - lloc)
-      (adjacent ?l1 - lloc ?l2 - lloc)
+    (:predicates
+        ;; Posició
+        (at ?r - robot ?l - lloc)
+        (adjacent ?l1 - lloc ?l2 - lloc)
+        (free ?l - lloc)
+        (transitable ?l - lloc)
 
-      ;; Estanteries
-      (top ?p - paquet ?e - estanteria)
-      (empty ?e - estanteria)
+        ;; Piles a estanteries
+        (on-shelf ?p - paquet ?e - estanteria)
+        (on ?p1 - paquet ?p2 - paquet)
+        (clear ?p - paquet)
+        (shelf-empty ?e - estanteria)
 
-      ;; Robots carregant paquets
-      (carrega-top ?r - robot ?p - paquet)
+        ;; Robot: només 1 paquet a la vegada
+        (holding ?r - robot ?p - paquet)
+        (handempty ?r - robot)
 
-      ;; Paquets que cal dispensar
-      (requested ?p - paquet)
-
-      ;; Paquets ja dispensats
-      (dispensed ?p - paquet)
-  )
+        ;; Objectiu
+        (requested ?p - paquet)
+        (dispensed ?p - paquet)
+            
+        ;; Ordre
+        (can-dispense ?p - paquet)
+        (next ?p1 - paquet ?p2 - paquet)
+        (last ?p - paquet)
+    )
 
   ;; --------------------------------------------------------------------------
   ;; 3. ACCIONS
@@ -67,39 +76,58 @@
   ;; No controlem energia ni càrrega.
   ;; --------------------------------------------------------------------------
 
-  (:action move
-      :parameters (?r - robot ?from - lloc ?to - lloc)
-      :precondition (and
-          (at ?r ?from)
-          (adjacent ?from ?to)
-      )
-      :effect (and
-          (not (at ?r ?from))
-          (at ?r ?to)
-      )
-  )
+    (:action move
+        :parameters (?r - robot ?from - lloc ?to - lloc)
+        :precondition (and
+            (at ?r ?from)
+            (adjacent ?from ?to)
+            (transitable ?to)
+            (free ?to)
+        )
+        :effect (and
+            (not (at ?r ?from))
+            (at ?r ?to)
+            (free ?from)
+            (not (free ?to))
+        )
+    )
 
-  ;; --------------------------------------------------------------------------
-  ;; 3.2. Agafar un paquet d'una estanteria
-  ;; --------------------------------------------------------------------------
-  ;; Només es pot agafar el paquet del capdamunt.
-  ;; El robot ha d'estar en una casella adjacent a l'estanteria.
-  ;; --------------------------------------------------------------------------
+    (:action pick-from-shelf
+        :parameters (?r - robot ?p - paquet ?e - estanteria ?l - lloc)
+        :precondition (and
+            (at ?r ?l)
+            (adjacent ?l ?e)
+            (on-shelf ?p ?e)
+            (clear ?p)
+            (handempty ?r)
+            (not (dispensed ?p))
+        )
+        :effect (and
+            (holding ?r ?p)
+            (not (handempty ?r))
+            (not (on-shelf ?p ?e))
+            (shelf-empty ?e)
+        )
+    )
 
-  (:action pick
-      :parameters (?r - robot ?p - paquet ?e - estanteria ?l - lloc)
-      :precondition (and
-          (at ?r ?l)
-          (adjacent ?l ?e)
-          (top ?p ?e)
-      )
-      :effect (and
-          ;; El paquet passa a ser el top del robot
-          (carrega-top ?r ?p)
-          ;; L'estanteria deixa de tenir aquest paquet al top
-          (not (top ?p ?e))
-      )
-  )
+    (:action pick-from-package
+        :parameters (?r - robot ?p - paquet ?q - paquet ?e - estanteria ?l - lloc)
+        :precondition (and
+            (at ?r ?l)
+            (adjacent ?l ?e)
+            (on ?p ?q)
+            (clear ?p)
+            (handempty ?r)
+            (not (dispensed ?p))
+        )
+        :effect (and
+            (holding ?r ?p)
+            (not (handempty ?r))
+            (not (on ?p ?q))
+            (clear ?q)
+        )
+    )
+
 
   ;; --------------------------------------------------------------------------
   ;; 3.3. Deixar un paquet a una estanteria
@@ -107,39 +135,94 @@
   ;; El robot deixa el paquet que porta al capdamunt.
   ;; --------------------------------------------------------------------------
 
-  (:action drop
-      :parameters (?r - robot ?p - paquet ?e - estanteria ?l - lloc)
-      :precondition (and
-          (at ?r ?l)
-          (adjacent ?l ?e)
-          (carrega-top ?r ?p)
-      )
-      :effect (and
-          ;; El paquet passa a ser el top de l'estanteria
-          (top ?p ?e)
-          ;; El robot deixa de portar-lo
-          (not (carrega-top ?r ?p))
-      )
-  )
+    (:action drop-on-empty-shelf
+        :parameters (?r - robot ?p - paquet ?e - estanteria ?l - lloc)
+        :precondition (and
+            (at ?r ?l)
+            (adjacent ?l ?e)
+            (holding ?r ?p)
+            (shelf-empty ?e)
+            (not (dispensed ?p))
+        )
+        :effect (and
+            (on-shelf ?p ?e)
+            (clear ?p)
+            (not (shelf-empty ?e))
+            (handempty ?r)
+            (not (holding ?r ?p))
+        )
+    )
 
-  ;; --------------------------------------------------------------------------
-  ;; 3.4. Dispensar un paquet al dispensador
-  ;; --------------------------------------------------------------------------
-  ;; El robot ha d'estar adjacent al dispensador.
-  ;; Només pot dispensar el paquet que porta al top.
-  ;; --------------------------------------------------------------------------
+    (:action drop-on-package
+        :parameters (?r - robot ?p - paquet ?q - paquet ?e - estanteria ?l - lloc)
+        :precondition (and
+            (at ?r ?l)
+            (adjacent ?l ?e)
+            (holding ?r ?p)
+            (clear ?q)
+            (not (dispensed ?p))
+        )
+        :effect (and
+            (on ?p ?q)
+            (clear ?p)
+            (not (clear ?q))
+            (handempty ?r)
+            (not (holding ?r ?p))
+        )
+    )
 
-  (:action dispense
-      :parameters (?r - robot ?p - paquet ?d - dispensador ?l - lloc)
-      :precondition (and
-          (at ?r ?l)
-          (adjacent ?l ?d)
-          (carrega-top ?r ?p)
-          (requested ?p)
-      )
-      :effect (and
-          (dispensed ?p)
-          (not (carrega-top ?r ?p))
-      )
-  )
+    (:action dispense-free
+        :parameters (?r - robot ?p - paquet ?d - dispensador ?l - lloc)
+        :precondition (and
+            (at ?r ?l)
+            (adjacent ?l ?d)
+            (holding ?r ?p)
+            (requested ?p)
+            (not (dispensed ?p))
+        )
+        :effect (and
+            (dispensed ?p)
+            (handempty ?r)
+            (not (holding ?r ?p))
+        )
+    )
+
+    (:action dispense-ordered-next
+        :parameters (?r - robot ?p - paquet ?pnext - paquet ?d - dispensador ?l - lloc)
+        :precondition (and
+            (at ?r ?l)
+            (adjacent ?l ?d)
+            (holding ?r ?p)
+            (requested ?p)
+            (can-dispense ?p)
+            (next ?p ?pnext)
+            (not (dispensed ?p))
+        )
+        :effect (and
+            (dispensed ?p)
+            (not (can-dispense ?p))
+            (can-dispense ?pnext)
+            (handempty ?r)
+            (not (holding ?r ?p))
+        )
+    )
+
+    (:action dispense-ordered-last
+        :parameters (?r - robot ?p - paquet ?d - dispensador ?l - lloc)
+        :precondition (and
+            (at ?r ?l)
+            (adjacent ?l ?d)
+            (holding ?r ?p)
+            (requested ?p)
+            (can-dispense ?p)
+            (last ?p)
+            (not (dispensed ?p))
+        )
+        :effect (and
+            (dispensed ?p)
+            (not (can-dispense ?p))
+            (handempty ?r)
+            (not (holding ?r ?p))
+        )
+    )
 )
