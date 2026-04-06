@@ -8,6 +8,14 @@
         d - dispenser
     )
     (:init
+        (allowed-to-dispense pkg1)
+        (allowed-to-dispense pkg2)
+        (allowed-to-dispense pkg3)
+
+        (is-pkg1 pkg1)
+        (is-pkg2 pkg2)
+        (is-pkg3 pkg3)
+        
         (at r1 l61)
         (at r2 l55)
 
@@ -29,11 +37,6 @@
         (in-stack pkg1 e1)
         (in-stack pkg2 e1)
         (in-stack pkg3 e2)
-
-        (next-to-dispense pkg2)
-        (order-seq pkg2 pkg1)
-        (order-seq pkg1 pkg3)
-        (order-seq pkg3 p_end)
 
         (connected l11 l12)
         (connected l12 l11)
@@ -83,9 +86,14 @@
     )
     (:goal
         (and
-            (dispensed pkg1)
             (dispensed pkg2)
+            (phase2)
+
+            (dispensed pkg1)
+            (phase1)
+
             (dispensed pkg3)
+            (phase3)
         )
     )
 )

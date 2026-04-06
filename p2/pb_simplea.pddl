@@ -8,6 +8,10 @@
         d - dispenser
     )
     (:init
+        (allowed-to-dispense pkg1)
+        (allowed-to-dispense pkg2)
+        (allowed-to-dispense pkg3)
+
         (at r1 l61)
         (at r2 l55)
 
