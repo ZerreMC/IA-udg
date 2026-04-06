@@ -19,6 +19,17 @@
         (in-stack ?x - stack_element ?base - stack_element)
 
         (dispensed ?p - package)
+
+        ;; Control de permisos
+        (allowed-to-dispense ?p - package)
+
+        ;; Control d’ordre
+        (phase2)
+        (phase3)
+
+        ;; Identificadors de paquets
+        (is-pkg2 ?p - package)
+        (is-pkg3 ?p - package)
     )
 
     (:action moure
@@ -93,6 +104,8 @@
             (clear ?p)
             (on ?p ?p_under)
             (in-stack ?p ?r)
+
+            (allowed-to-dispense ?p)
         )
         :effect (and
             (not (on ?p ?p_under))
@@ -101,5 +114,27 @@
             (not (clear ?p))
             (dispensed ?p)
         )
+    )
+
+    ;; Accions de control d’ordre
+    (:action mark-phase2
+        :parameters (?p - package)
+        :precondition (and
+            (is-pkg2 ?p)
+            (dispensed ?p)
+            (not (phase2))
+        )
+        :effect (phase2)
+    )
+
+    (:action mark-phase3
+        :parameters (?p - package)
+        :precondition (and
+            (is-pkg3 ?p)
+            (phase2)
+            (dispensed ?p)
+            (not (phase3))
+        )
+        :effect (phase3)
     )
 )
