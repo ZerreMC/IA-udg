@@ -1,8 +1,11 @@
 (define (domain magabot_avancat1)
     (:requirements :strips :typing :negative-preconditions :numeric-fluents :conditional-effects)
-
+    ; Afegeix numeric-fluents per gestionar bateria, càrrega i energia.
+    ; Afegeix conditional-effects per permetre recàrrega parcial o total.
     (:types
         location dispenser charger package robot shelf - stack_element
+        ; stack_element és un supertipus per representar elements apilables:
+        ; robots (com a base d'una pila)
     )
 
     (:predicates
@@ -24,14 +27,15 @@
     )
 
     (:functions
-        (battery ?r - robot)
-        (max-battery ?r - robot)
-        (load ?r - robot)
-        (max-load ?r - robot)
-        (weight ?p - package)
-        (total-energy-used)
+        (battery ?r - robot) ; nivell de bateria actual del robot
+        (max-battery ?r - robot) ; capacitat màxima de bateria del robot
+        (load ?r - robot) ; càrrega actual del robot (suma dels pesos dels paquets que porta)
+        (max-load ?r - robot) ; capacitat màxima de càrrega del robot
+        (weight ?p - package) ; pes de cada paquet
+        (total-energy-used) ; energia total consumida per tots els robots (per a estadístiques)
     )
 
+    ; El robot es mou portant poca càrrega. Consumeix menys bateria (2 unitats) i només pot fer-ho si la càrrega és inferior a 5 i té bateria suficient.
     (:action moure-lleuger
         :parameters (?r - robot ?from - location ?to - location)
         :precondition (and
@@ -51,6 +55,7 @@
         )
     )
 
+    ; El robot es mou portant molta càrrega. Consumeix més bateria (3 unitats) i només pot fer-ho si la càrrega és igual o superior a 5.
     (:action moure-pesat
         :parameters (?r - robot ?from - location ?to - location)
         :precondition (and
@@ -70,6 +75,7 @@
         )
     )
 
+    ; El robot recull un paquet de la prestatgeria. A més de les condicions d'apilat, comprova que el pes total no superi la seva capacitat màxima. L'acció incrementa la càrrega del robot segons el pes del paquet.
     (:action agafar
         :parameters (?r - robot ?loc - location ?s - shelf ?p - package ?p_under - stack_element ?r_top - stack_element)
         :precondition (and
@@ -93,6 +99,7 @@
         )
     )
 
+    ; El robot deixa un paquet a la prestatgeria. A més de moure el paquet entre piles, redueix la càrrega total del robot segons el pes del paquet.
     (:action descarregar
         :parameters (?r - robot ?loc - location ?s - shelf ?p - package ?p_under - stack_element ?s_top - stack_element)
         :precondition (and
@@ -115,6 +122,7 @@
         )
     )
 
+    ; El robot dispensa un paquet al dispensador. A més de marcar-lo com dispensat i avançar la seqüència, redueix la càrrega del robot.
     (:action dispensar
         :parameters (?r - robot ?loc - location ?d - dispenser ?p - package ?p_under - stack_element ?p_next - package)
         :precondition (and
@@ -138,6 +146,9 @@
         )
     )
 
+    ; El robot recarrega la bateria quan està al costat d'un carregador. Utilitza efectes condicionals per evitar superar la bateria màxima:
+    ; - Si hi ha espai suficient, afegeix 20 unitats.
+    ; - Si no, assigna directament la bateria màxima.
     (:action recarregar
         :parameters (?r - robot ?loc - location ?c - charger)
         :precondition (and
