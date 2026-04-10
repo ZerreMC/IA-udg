@@ -87,6 +87,7 @@
             (clear ?r_top)
             (in-stack ?r_top ?r)
             (<= (+ (load ?r) (weight ?p)) (max-load ?r))
+            (> (battery ?r) 0)
         )
         :effect (and
             (not (on ?p ?p_under))
@@ -110,6 +111,7 @@
             (in-stack ?p ?r)
             (clear ?s_top)
             (in-stack ?s_top ?s)
+            (> (battery ?r) 0)
         )
         :effect (and
             (not (on ?p ?p_under))
@@ -133,6 +135,7 @@
             (in-stack ?p ?r)
             (next-to-dispense ?p)
             (order-seq ?p ?p_next)
+            (> (battery ?r) 0)
         )
         :effect (and
             (not (on ?p ?p_under))

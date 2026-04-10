@@ -49,8 +49,10 @@
         (in-stack pkg4 e1)
 
         (next-to-dispense pkg1)
-        (order-seq pkg1 pkg2)
-        (order-seq pkg2 pkg3)
+        (next-to-dispense pkg2)
+        (next-to-dispense pkg3)
+        (order-seq pkg1 p_end)
+        (order-seq pkg2 p_end)
         (order-seq pkg3 p_end)
 
         (connected l11 l12)
